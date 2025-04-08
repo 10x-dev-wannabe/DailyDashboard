@@ -3,93 +3,44 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"github.com/10x-dev-wannabe/DailyDashboard/functions"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
+	"time"
 )
 
-type day struct {
-	id   int
-	note string
-	toDo string
-}
-
 func main() {
-	// Open database connection
+	functions.Init()
+
+	var statement string
 	db, err := sql.Open("sqlite3", "data.db")
-	// Throw error if neded
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
-	// Create table
+	timeNow := time.Now()
+	yearNow, monthNow, dayNow := timeNow.Date()
+	_, weekNow := timeNow.ISOWeek()
+	dow := timeNow.Weekday()
+	fmt.Println(yearNow)
 
-	// Define the callendar table where we store all data.
-	statement, err := db.Prepare(`CREATE TABLE IF NOT EXISTS callendar (
-		year  INTEGER,
-		month INTEGER,
-		day   INTEGER,
-		woy   INTEGER,
-		dow   INTEGER,
-		qtr   INTEGER,
-		plan  STRING,
-		did   STRING,
-		PRIMARY KEY(year, month, day, qtr)
-		)`)
-	if err != nil {
-		log.Println("Error in creating table")
-	} else {
-		log.Println("Successfully created callendar table!")
-	}
-	statement.Exec()
+	qtr := timeNow.Hour()*4 + timeNow.Minute()/15
 
-	statement, err = db.Prepare(`CREATE TABLE IF NOT EXISTS dailyNotes (
-		year  INTEGER,
-		month INTEGER,
-		day   INTEGER,
-		note  TEXT,
-		toDo  TEXT,
-		PRIMARY KEY(year, month, day)
-		)`)
-	if err != nil {
-		log.Println("Error in creating table")
-	} else {
-		log.Println("Successfully created daily notes table!")
-	}
-	statement.Exec()
+	statement = "INSERT INTO callendar(year, month, day, woy, qtr, dow, plan, did) VALUES(?, ?, ?, ?, ?, ?, ?, ?)"
+	_, err = db.Exec(statement, yearNow, monthNow, dayNow, weekNow, qtr, dow, " ", " ")
+	fmt.Println(err)
 
-	statement, err = db.Prepare(`CREATE TABLE IF NOT EXISTS weeklyNotes (
-		year INTEGER,
-		woy  INTEGER,
-		note TEXT,
-		toDo TEXT,
-		PRIMARY KEY(year, woy)
-		)`)
-	if err != nil {
-		log.Println("Error in creating table")
-	} else {
-		log.Println("Successfully created weekly notes table!")
-	}
-	statement.Exec()
+	rows, _ := db.Query("SELECT * FROM callendar")
+	defer rows.Close()
 
-	statement, err = db.Prepare(`CREATE TABLE IF NOT EXISTS monthlyNotes (
-		year  INTEGER,
-		month INTEGER,
-		note  TEXT,
-		toDo  TEXT,
-		PRIMARY KEY(year, month)		
-		)`)
-	if err != nil {
-		log.Println("Error in creating table")
-	} else {
-		log.Println("Successfully created monthly notes table!")
-	}
-	statement.Exec()
+	var a, b string
 
-	var version string
-	err = db.QueryRow("SELECT SQLITE_VERSION()").Scan(&version)
-	if err != nil {
-		log.Fatal(err)
+	for rows.Next() {
+		err := rows.Scan(&yearNow, &monthNow, &dayNow, &weekNow, &qtr, &dow, &b, &a)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(yearNow, monthNow, dayNow, weekNow, qtr, dow, b, a)
 	}
 
-	fmt.Println(version)
 }
