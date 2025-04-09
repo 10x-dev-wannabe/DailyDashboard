@@ -10,37 +10,35 @@ import (
 )
 
 func main() {
+	fmt.Println("init...")
 	functions.Init()
 
-	var statement string
 	db, err := sql.Open("sqlite3", "data.db")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
+	fmt.Println("oppened database...")
+
 	timeNow := time.Now()
-	yearNow, monthNow, dayNow := timeNow.Date()
-	_, weekNow := timeNow.ISOWeek()
-	dow := timeNow.Weekday()
-	fmt.Println(yearNow)
+	var today functions.MyDate
 
-	qtr := timeNow.Hour()*4 + timeNow.Minute()/15
+	today.Month = int(timeNow.Month())
+	today.Day = timeNow.Day()
+	today.Dow = int(timeNow.Weekday())
+	today.Year, today.Woy = timeNow.ISOWeek()
+	today.Qtr = timeNow.Hour()*4 + timeNow.Minute()/15
 
-	statement = "INSERT INTO callendar(year, month, day, woy, qtr, dow, plan, did) VALUES(?, ?, ?, ?, ?, ?, ?, ?)"
-	_, err = db.Exec(statement, yearNow, monthNow, dayNow, weekNow, qtr, dow, " ", " ")
-	fmt.Println(err)
-
-	rows, _ := db.Query("SELECT * FROM callendar")
-	defer rows.Close()
+	fmt.Println(timeNow.Weekday())
+	fmt.Println(today.Dow)
 
 	var a, b string
+	a = ""
+	b = ""
 
-	for rows.Next() {
-		err := rows.Scan(&yearNow, &monthNow, &dayNow, &weekNow, &qtr, &dow, &b, &a)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println(yearNow, monthNow, dayNow, weekNow, qtr, dow, b, a)
-	}
+	fmt.Println("Writing to file...")
+	functions.CallendarIn(db, today, a, b)
 
+	fmt.Println("Finished writing to file...")
+	fmt.Println("exiting...")
 }

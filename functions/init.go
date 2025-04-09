@@ -29,8 +29,8 @@ func Init() {
 		month INTEGER,
 		day   INTEGER,
 		woy   INTEGER,
-		qtr   INTEGER,
 		dow   STRING,
+		qtr   INTEGER,
 		plan  STRING,
 		did   STRING,
 		PRIMARY KEY(year, month, day, qtr)
