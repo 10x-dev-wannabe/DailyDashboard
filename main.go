@@ -29,11 +29,8 @@ func main() {
 	today.Year, today.Woy = timeNow.ISOWeek()
 	today.Qtr = timeNow.Hour()*4 + timeNow.Minute()/15
 
-	fmt.Println(timeNow.Weekday())
-	fmt.Println(today.Dow)
-
 	var a, b string
-	a = ""
+	a = "helu"
 	b = ""
 
 	fmt.Println("Writing to file...")

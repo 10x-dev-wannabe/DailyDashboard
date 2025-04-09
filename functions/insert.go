@@ -2,6 +2,7 @@ package functions
 
 import (
 	"database/sql"
+	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 )
@@ -16,10 +17,18 @@ type MyDate struct {
 }
 
 func CallendarIn(db *sql.DB, date MyDate, plan string, did string) sql.Result {
-	sql := `INSERT INTO callendar
-					(year, month, day, woy, dow, qtr) 
-	        VALUES(?, ?, ?, ?, ?, ?)`
+
+	// We update the data in the callendar
+	sql := `UPDATE callendar SET
+					plan = ? WHERE
+					year = ? AND
+					month= ? AND
+					day  = ? AND
+					woy  = ? AND
+					dow  = ? AND
+					qtr  = ?`
 	result, err := db.Exec(sql,
+		plan,
 		date.Year,
 		date.Month,
 		date.Day,
@@ -29,5 +38,25 @@ func CallendarIn(db *sql.DB, date MyDate, plan string, did string) sql.Result {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// If there is no data at the specified date, create row
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		sql = `INSERT INTO callendar
+					(year, month, day, woy, dow, qtr, plan) 
+	        VALUES(?, ?, ?, ?, ?, ?, ?);`
+		result, err = db.Exec(sql,
+			date.Year,
+			date.Month,
+			date.Day,
+			date.Woy,
+			date.Dow,
+			date.Qtr,
+			plan)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	fmt.Println("data modified sucessfully")
 	return result
 }
